@@ -26,7 +26,16 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: nest-app-repo
-          IMAGE_TAG: latest
+          IMAGE_TAG: ${{ github.sha }}
         run: |
+          # 1. Build the image with the unique GitHub SHA tag
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          
+          # 2. Also tag it as 'latest' so the most recent build is easy to find
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          # 3. Push the unique version (for history/rollbacks)
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+          # 4. Push the 'latest' version (to update the main pointer)
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
