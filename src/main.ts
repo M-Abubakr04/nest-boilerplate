@@ -12,14 +12,23 @@ async function bootstrap() {
   });
 
   const configService: ConfigService = app.get(ConfigService);
+  
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
     }),
   );
+
   app.useGlobalFilters(...exceptionFilters);
+  
   await getSwaggerConfiguration(app);
-  await app.listen(configService.get<number>('PORT'));
+
+  // FIXED: Added '0.0.0.0' to allow the container to accept external traffic 
+  // and a fallback port of 3000 if the config variable is missing.
+  const port = configService.get<number>('PORT') || 3000;
+  await app.listen(port, '0.0.0.0');
+  
+  console.log(`Application is running on: http://0.0.0.0:${port}`);
 }
 bootstrap();
